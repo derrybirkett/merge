@@ -25,14 +25,14 @@ if [[ -f "$COUNCIL_SCRIPT" ]]; then
       echo "Council script already patched — skipping."
     else
       # Insert merge/ready line after the council/approved label line using Python
-      python3 - "$COUNCIL_SCRIPT" <<'PYEOF'
+      python3 - "$COUNCIL_SCRIPT" <<'PYEOF' || echo "  Patch failed — patch manually: add 'gh pr edit \"\$PR_NUMBER\" --add-label \"merge/ready\"' after the council/approved label line."
 import sys
 path = sys.argv[1]
 content = open(path).read()
 old = '  gh pr edit "$PR_NUMBER" --add-label "council/approved"'
 new = old + '\n  gh pr edit "$PR_NUMBER" --add-label "merge/ready" 2>/dev/null || true'
 if old not in content:
-    print(f"ERROR: expected line not found in {path}", file=sys.stderr)
+    print(f"ERROR: expected line not found in {path}. Patch manually.", file=sys.stderr)
     sys.exit(1)
 open(path, 'w').write(content.replace(old, new, 1))
 print(f"Patched {path}")
