@@ -52,7 +52,7 @@ process_pr() {
   # Check CI status
   local ci_status
   ci_status=$(gh pr view "$pr" --json statusCheckRollup \
-    --jq '.statusCheckRollup | if length == 0 then "none" elif any(.[]; .conclusion == "FAILURE" or .conclusion == "CANCELLED" or .conclusion == "TIMED_OUT") then "failure" elif all(.[]; .status == "COMPLETED") then "success" else "pending" end')
+    --jq '.statusCheckRollup // [] | if length == 0 then "none" elif any(.[]; .conclusion == "FAILURE" or .conclusion == "CANCELLED" or .conclusion == "TIMED_OUT") then "failure" elif all(.[]; .status == "COMPLETED") then "success" else "pending" end')
 
   if [[ "$ci_status" == "failure" ]]; then
     gh pr comment "$pr" --body "### Merge Agent
@@ -197,9 +197,9 @@ if [[ -z "$prs" ]]; then
   exit 0
 fi
 
-for pr_number in $prs; do
+while IFS= read -r pr_number; do
   process_pr "$pr_number" || echo "PR #${pr_number}: unexpected error during processing, skipping"
-done
+done <<< "$prs"
 
 echo ""
 echo "=== Merge check complete ==="
