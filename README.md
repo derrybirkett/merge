@@ -1,6 +1,8 @@
 # Merge
 
-Autonomous merge agent for GitHub repos. Part of [MakerSuite](https://github.com/derrybirkett/deltado).
+**[derrybirkett.github.io/merge](https://derrybirkett.github.io/merge/)**
+
+Autonomous merge agent for GitHub repos. Part of the [Delta Suite](https://monospace.studio/ideas/product-labs/delta-suite): build → observe → gate.
 
 Polls every 30 minutes for PRs labelled `merge/ready`. After a 24-hour review window, runs an AI safety check, then merges or blocks.
 
@@ -38,11 +40,3 @@ bash merge/scripts/setup.sh
 
 Set `MERGE_STRATEGY` as a GitHub Actions repository variable to control merge method.
 Options: `squash` (default), `rebase`, `merge`.
-
-## MakerSuite
-
-Merge is designed to work standalone, but pairs with:
-- [Delta](https://github.com/derrybirkett/delta) — builds features autonomously
-- [Council](https://github.com/derrybirkett/council) — AI CTO review gate
-
-When all three are installed, `setup.sh` patches Council to apply `merge/ready` automatically after `council/approved`, completing the fully autonomous loop: **Delta builds → Council reviews → Merge ships**.
