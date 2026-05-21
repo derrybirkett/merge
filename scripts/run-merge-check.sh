@@ -25,11 +25,11 @@ process_pr() {
     return 0
   fi
 
-  # Get timestamp when merge/ready was applied (last 100 events)
+  # Get timestamp when merge/ready was most recently applied (paginate all events)
   local labeled_at
-  labeled_at=$(gh api "repos/{owner}/{repo}/issues/${pr}/events?per_page=100" \
-    --jq '[.[] | select(.event == "labeled" and .label.name == "merge/ready")] | last | .created_at // empty' \
-    2>/dev/null || echo "")
+  labeled_at=$(gh api --paginate "repos/{owner}/{repo}/issues/${pr}/events" 2>/dev/null \
+    | jq -rs '[.[][] | select(.event == "labeled" and .label.name == "merge/ready")] | max_by(.created_at) | .created_at // empty' \
+    || echo "")
 
   if [[ -z "$labeled_at" ]]; then
     echo "PR #${pr}: cannot determine merge/ready timestamp, skipping"
@@ -153,11 +153,16 @@ Merged after ${elapsed_hours}h review window using \`${MERGE_STRATEGY}\` strateg
 ${verdict}"
       echo "PR #${pr}: merged"
     else
+      gh pr edit "$pr" --add-label "merge/blocked" --remove-label "merge/ready"
       gh pr comment "$pr" --body "### Merge Agent
 
-Failed to execute merge. Check that GitHub Actions is permitted to create pull requests:
+Failed to execute merge — blocked to prevent retry loop.
+
+Possible causes: branch protection rules, required reviews, or insufficient workflow permissions.
+
+Remove \`merge/blocked\` and re-apply \`merge/ready\` to retry. If permissions are the issue, check:
 *Settings → Actions → General → Workflow permissions → Allow GitHub Actions to create and approve pull requests*"
-      echo "PR #${pr}: merge execution failed"
+      echo "PR #${pr}: merge execution failed, applied merge/blocked"
     fi
 
   elif [[ "$first_word" == "BLOCK" ]]; then
