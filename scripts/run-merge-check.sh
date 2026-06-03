@@ -52,7 +52,7 @@ process_pr() {
   # Check CI status
   local ci_status
   ci_status=$(gh pr view "$pr" --json statusCheckRollup \
-    --jq '.statusCheckRollup // [] | if length == 0 then "none" elif any(.[]; .conclusion == "FAILURE" or .conclusion == "CANCELLED" or .conclusion == "TIMED_OUT") then "failure" elif all(.[]; .status == "COMPLETED") then "success" else "pending" end')
+    --jq '.statusCheckRollup // [] | if length == 0 then "none" elif any(.[]; (.conclusion == "FAILURE" or .conclusion == "CANCELLED" or .conclusion == "TIMED_OUT") or (.__typename == "StatusContext" and (.state == "FAILURE" or .state == "ERROR"))) then "failure" elif all(.[]; (.__typename == "CheckRun" and .status == "COMPLETED") or (.__typename == "StatusContext" and .state == "SUCCESS")) then "success" else "pending" end')
 
   if [[ "$ci_status" == "failure" ]]; then
     gh pr comment "$pr" --body "### Merge Agent
