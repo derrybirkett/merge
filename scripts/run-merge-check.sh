@@ -129,7 +129,7 @@ EOF
 
   # Parse first word: must be MERGE or BLOCK
   local first_word
-  first_word=$(echo "$verdict" | head -1 | awk '{print toupper($1)}')
+  first_word=$(echo "$verdict" | head -1 | awk '{print toupper($1)}' | tr -d '[:punct:]')
 
   if [[ "$first_word" == "MERGE" ]]; then
     local merge_flag
