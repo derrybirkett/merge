@@ -42,12 +42,13 @@ process_pr() {
   now_epoch=$(date +%s)
   elapsed=$(( now_epoch - labeled_epoch ))
 
-  if (( elapsed < REVIEW_WINDOW_SECONDS )); then
+  if [[ "${MERGE_TEST_MODE:-false}" != "true" ]] && (( elapsed < REVIEW_WINDOW_SECONDS )); then
     local remaining_hours
     remaining_hours=$(( (REVIEW_WINDOW_SECONDS - elapsed) / 3600 ))
     echo "PR #${pr}: ${remaining_hours}h remaining in review window, skipping"
     return 0
   fi
+  [[ "${MERGE_TEST_MODE:-false}" == "true" ]] && echo "PR #${pr}: MERGE_TEST_MODE active — bypassing review window"
 
   # Check CI status
   local ci_status
@@ -97,8 +98,10 @@ Cannot merge — conflicts with \`main\`. Please rebase and resolve conflicts, t
   pkg_content=$(git show origin/main:package.json 2>/dev/null || echo "(no package.json)")
   elapsed_hours=$(( elapsed / 3600 ))
 
-  local verdict
-  verdict=$(claude --print --model claude-sonnet-4-6 -p "$prompt" <<EOF
+  local verdict prompt_file
+  prompt_file=$(mktemp)
+  echo "$prompt" > "$prompt_file"
+  verdict=$(claude --print --model claude-sonnet-4-6 --system-prompt-file "$prompt_file" <<EOF
 ## PR #${pr}: ${pr_title}
 
 ### Description
@@ -119,6 +122,7 @@ ${pkg_content}
 ${pr_diff}
 EOF
 )
+  rm -f "$prompt_file"
 
   echo "AI verdict for PR #${pr}:"
   echo "$verdict"
