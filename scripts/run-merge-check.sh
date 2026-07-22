@@ -101,7 +101,7 @@ Cannot merge — conflicts with \`main\`. Please rebase and resolve conflicts, t
   local verdict prompt_file
   prompt_file=$(mktemp)
   echo "$prompt" > "$prompt_file"
-  verdict=$(claude --print --model claude-sonnet-4-6 --system-prompt-file "$prompt_file" <<EOF
+  verdict=$(claude --print --model haiku --system-prompt-file "$prompt_file" <<EOF
 ## PR #${pr}: ${pr_title}
 
 ### Description
